@@ -399,15 +399,21 @@ if ! command -v "$APK" >/dev/null; then
 fi
 
 #-----------------------------------------------------------------------
-if [ ! -f "$IMAGE_FILE" ]; then
+if [ ! -f "$IMAGE_FILE" -a ! -b "$IMAGE_FILE" ]; then
 	einfo "Creating $IMAGE_FORMAT image of size $IMAGE_SIZE"
 	qemu-img create ${IMAGE_FORMAT:+-f $IMAGE_FORMAT} "$IMAGE_FILE" "$IMAGE_SIZE"
 fi
 
 #-----------------------------------------------------------------------
-einfo "Attaching image $IMAGE_FILE as a NBD device"
+if [ -b "$IMAGE_FILE" ]; then
+  einfo "Provided image $IMAGE_FILE is a block device"
 
-nbd_dev=$(attach_image "$IMAGE_FILE" "$IMAGE_FORMAT")
+  nbd_dev="$IMAGE_FILE"
+else
+  einfo "Attaching image $IMAGE_FILE as a NBD device"
+
+  nbd_dev=$(attach_image "$IMAGE_FILE" "$IMAGE_FORMAT")
+fi
 
 #-----------------------------------------------------------------------
 einfo "Formatting image to $ROOTFS"
